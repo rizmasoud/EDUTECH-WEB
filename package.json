@@ -1,0 +1,25 @@
+{
+  "name": "edutech-web",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.1",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @edutech/api --filter @edutech/web dev",
+    "dev:api": "pnpm --filter @edutech/api dev",
+    "dev:web": "pnpm --filter @edutech/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "db:generate": "pnpm --filter @edutech/api drizzle-kit generate",
+    "db:check": "pnpm --filter @edutech/api drizzle-kit check"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  }
+}
