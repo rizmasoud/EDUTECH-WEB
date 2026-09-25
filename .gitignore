@@ -1,0 +1,22 @@
+# Dependencies and package-manager artifacts
+node_modules/
+.pnpm-store/
+
+# Build output
+.next/
+dist/
+coverage/
+
+# Environment files (the template is intentionally tracked)
+.env
+.env.*
+!.env.example
+
+# Tooling and IDE files
+.DS_Store
+.idea/
+.vscode/
+*.tsbuildinfo
+
+# Local Docker data
+infrastructure/docker/postgres-data/
