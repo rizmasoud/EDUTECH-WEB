@@ -1,75 +1,90 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
-interface HealthStatus {
-  status: 'ok' | 'degraded';
-  version: string;
-  environment: string;
-  database: 'connected' | 'disconnected';
+interface Account {
+  id: string;
+  personnelCode: string;
+  roles: string[];
+  teacher: { id: string } | null;
 }
-
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
 export default function HomePage() {
-  const [health, setHealth] = useState<HealthStatus>();
-  const [error, setError] = useState<string>();
-
+  const [account, setAccount] = useState<Account | null>(null);
+  const [personnelCode, setPersonnelCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadHealth(): Promise<void> {
-      try {
-        const response = await fetch(`${apiBaseUrl}/health`, { signal: controller.signal });
-        if (!response.ok) throw new Error(`API request failed (${response.status})`);
-        setHealth((await response.json()) as HealthStatus);
-      } catch (requestError) {
-        if (!controller.signal.aborted) {
-          setError(requestError instanceof Error ? requestError.message : 'API request failed');
-        }
-      }
-    }
-
-    void loadHealth();
-    return () => controller.abort();
+    void fetch(`${apiBaseUrl}/api/v1/auth/me`, { credentials: 'include' }).then(async (response) =>
+      response.ok
+        ? setAccount(((await response.json()) as { account: Account }).account)
+        : undefined,
+    );
   }, []);
-
+  async function login(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setMessage('');
+    const response = await fetch(`${apiBaseUrl}/api/v1/auth/login`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ personnelCode, password }),
+    });
+    if (!response.ok) {
+      setMessage('Sign in failed. Check your credentials and try again.');
+      return;
+    }
+    setAccount(((await response.json()) as { account: Account }).account);
+    setPassword('');
+  }
+  async function logout(): Promise<void> {
+    await fetch(`${apiBaseUrl}/api/v1/auth/logout`, { method: 'POST', credentials: 'include' });
+    setAccount(null);
+  }
   return (
     <main>
       <section aria-labelledby="page-title">
-        <p className="eyebrow">Phase 0 · Foundation</p>
-        <h1 id="page-title">EduTech Web is running.</h1>
-        <p className="description">
-          This intentionally minimal page verifies communication with the API. No business feature
-          is implemented yet.
-        </p>
-        <div className="health" aria-live="polite">
-          <h2>API health</h2>
-          {health ? (
-            <dl>
-              <div>
-                <dt>Status</dt>
-                <dd>{health.status}</dd>
-              </div>
-              <div>
-                <dt>Database</dt>
-                <dd>{health.database}</dd>
-              </div>
-              <div>
-                <dt>Version</dt>
-                <dd>{health.version}</dd>
-              </div>
-              <div>
-                <dt>Environment</dt>
-                <dd>{health.environment}</dd>
-              </div>
-            </dl>
-          ) : error ? (
-            <p className="error">Unavailable: {error}</p>
-          ) : (
-            <p>Checking API and database connectivity…</p>
-          )}
-        </div>
+        <p className="eyebrow">Phase 1 · Secure access</p>
+        <h1 id="page-title">EduTech</h1>
+        {account ? (
+          <div className="health">
+            <p>
+              Signed in as <strong>{account.personnelCode}</strong>.
+            </p>
+            <p>Roles: {account.roles.join(', ') || 'No roles assigned'}</p>
+            <button onClick={() => void logout()}>Sign out</button>
+          </div>
+        ) : (
+          <form onSubmit={login}>
+            <p className="description">Sign in with your personnel code and password.</p>
+            <label>
+              Personnel code
+              <input
+                value={personnelCode}
+                onChange={(event) => setPersonnelCode(event.target.value)}
+                autoComplete="username"
+                required
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            <button type="submit">Sign in</button>
+            {message && (
+              <p className="error" role="alert">
+                {message}
+              </p>
+            )}
+          </form>
+        )}
       </section>
     </main>
   );

@@ -1,0 +1,8 @@
+CREATE TYPE "role_name" AS ENUM ('SUPERVISOR', 'TEACHER');
+CREATE TABLE "accounts" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL, "personnel_code" text NOT NULL UNIQUE, "password_hash" text NOT NULL, "is_active" boolean DEFAULT true NOT NULL, "created_at" timestamp with time zone DEFAULT now() NOT NULL, "updated_at" timestamp with time zone DEFAULT now() NOT NULL);
+CREATE TABLE "roles" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL, "name" "role_name" NOT NULL UNIQUE);
+CREATE TABLE "account_roles" ("account_id" uuid NOT NULL REFERENCES "accounts"("id") ON DELETE cascade, "role_id" uuid NOT NULL REFERENCES "roles"("id") ON DELETE restrict, CONSTRAINT "account_roles_account_id_role_id_pk" PRIMARY KEY("account_id","role_id"));
+CREATE TABLE "teachers" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL, "account_id" uuid UNIQUE REFERENCES "accounts"("id") ON DELETE set null, "created_at" timestamp with time zone DEFAULT now() NOT NULL, "updated_at" timestamp with time zone DEFAULT now() NOT NULL);
+CREATE TABLE "sessions" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL, "account_id" uuid NOT NULL REFERENCES "accounts"("id") ON DELETE cascade, "token_hash" text NOT NULL UNIQUE, "expires_at" timestamp with time zone NOT NULL, "created_at" timestamp with time zone DEFAULT now() NOT NULL, "invalidated_at" timestamp with time zone);
+CREATE UNIQUE INDEX "sessions_token_hash_idx" ON "sessions" USING btree ("token_hash");
+CREATE TABLE "security_audit_events" ("id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL, "event_type" text NOT NULL, "account_id" uuid REFERENCES "accounts"("id") ON DELETE set null, "personnel_code" text, "ip_address" text, "occurred_at" timestamp with time zone DEFAULT now() NOT NULL);

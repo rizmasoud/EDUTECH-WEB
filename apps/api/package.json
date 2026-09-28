@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
-    "drizzle-kit": "drizzle-kit"
+    "drizzle-kit": "drizzle-kit",
+    "test": "pnpm build && node --test \"dist/**/*.spec.js\""
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
